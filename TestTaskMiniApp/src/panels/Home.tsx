@@ -1,4 +1,4 @@
-import { FC, useRef, useState } from 'react'
+import { FC, useRef, useState, ChangeEvent } from 'react'
 import {
   Panel,
   PanelHeader,
@@ -19,6 +19,7 @@ import { yupResolver } from '@hookform/resolvers/yup'
 import * as yup from 'yup'
 import { useGetInfoByName } from '../api/useInfoByName'
 import { useQueryClient } from '@tanstack/react-query'
+import { debounce } from 'lodash'
 
 type HomeProps = NavIdProps
 const INPUT_PATTERN = /^[A-Za-z]+$/i
@@ -37,11 +38,35 @@ export const Home: FC<HomeProps> = ({ id }) => {
     register,
     handleSubmit,
     formState: { errors },
+    watch,
   } = useForm({
     resolver: yupResolver(NameSchema),
   })
+
   const [formName, setFormName] = useState<string>('')
   const { data, isLoading, error } = useGetInfoByName(formName)
+
+  const fetchCatFact = async () => {
+    await baseApiRequest({
+      url: 'https://catfact.ninja/fact',
+    }).then((data) => {
+      resetInputText(data.fact)
+    })
+  }
+
+  const debouncedSubmit = debounce((name: string) => {
+    setFormName(name)
+  }, 3000)
+
+  const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+    debouncedSubmit(event.target.value)
+  }
+
+  const onSubmitHandler = async ({ name }: { name: string }) => {
+    debouncedSubmit.cancel()
+    await queryClient.cancelQueries({ queryKey: ['person_info'] })
+    setFormName(name)
+  }
 
   const resetInputText = (text: string) => {
     if (!inputElement.current) {
@@ -52,19 +77,6 @@ export const Home: FC<HomeProps> = ({ id }) => {
     const pos = text.split(' ')[0].length
     inputElement.current.setSelectionRange(pos, pos)
     inputElement.current.focus()
-  }
-
-  const fetchCatFact = async () => {
-    await baseApiRequest({
-      url: 'https://catfact.ninja/fact',
-    }).then((data) => {
-      resetInputText(data.fact)
-    })
-  }
-
-  const onSubmitHandler = async ({ name }: { name: string }) => {
-    await queryClient.cancelQueries({ queryKey: ['person_info'] })
-    setFormName(name)
   }
 
   const getContent = () => {
@@ -84,6 +96,12 @@ export const Home: FC<HomeProps> = ({ id }) => {
       )
     }
   }
+
+  watch((value) => {
+    handleInputChange({
+      target: { value: value.name },
+    } as ChangeEvent<HTMLInputElement>)
+  })
 
   return (
     <Panel id={id}>

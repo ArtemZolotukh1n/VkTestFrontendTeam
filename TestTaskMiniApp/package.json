@@ -21,12 +21,14 @@
     "@vkontakte/vk-tunnel": "^0.1.4",
     "@vkontakte/vkui": "^6.0.0",
     "axios": "^1.6.7",
+    "lodash": "^4.17.21",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.51.0",
     "yup": "^1.4.0"
   },
   "devDependencies": {
+    "@types/lodash": "^4.17.0",
     "@types/react": "^18.2.43",
     "@types/react-dom": "^18.2.17",
     "@typescript-eslint/eslint-plugin": "^6.14.0",
