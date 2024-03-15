@@ -1,4 +1,4 @@
-import { FC, useRef } from 'react'
+import { FC, useRef, useState } from 'react'
 import {
   Panel,
   PanelHeader,
@@ -21,11 +21,13 @@ import { useGetInfoByName } from '../api/useInfoByName'
 import { useQueryClient } from '@tanstack/react-query'
 
 type HomeProps = NavIdProps
+const INPUT_PATTERN = /^[A-Za-z]+$/i
+
 const NameSchema = yup.object().shape({
   name: yup
     .string()
     .required('Пожалуйста, введите это обязательное поле')
-    .matches(/^[aA-zZ\s]+$/, 'Разрешены только символы английского алфавита'),
+    .matches(INPUT_PATTERN, 'Разрешены только символы английского алфавита'),
 })
 
 export const Home: FC<HomeProps> = ({ id }) => {
@@ -35,18 +37,11 @@ export const Home: FC<HomeProps> = ({ id }) => {
     register,
     handleSubmit,
     formState: { errors },
-    watch,
   } = useForm({
     resolver: yupResolver(NameSchema),
   })
-  const formName = watch('name')
-  const { data, isLoading, error, refetch } = useGetInfoByName(formName)
-
-  // Первый номер также можно сделать через useLayoutEffect -- но это будет два ререндера и будет
-  // + бесполезный стейт и вообще это неправильное использование useLayoutEffect
-  // useLayoutEffect(() => {
-  //   setCursorPosForInput(coolCatFact.split(' ')[0].length)
-  // }, [fetchCounter])
+  const [formName, setFormName] = useState<string>('')
+  const { data, isLoading, error } = useGetInfoByName(formName)
 
   const resetInputText = (text: string) => {
     if (!inputElement.current) {
@@ -57,22 +52,37 @@ export const Home: FC<HomeProps> = ({ id }) => {
     const pos = text.split(' ')[0].length
     inputElement.current.setSelectionRange(pos, pos)
     inputElement.current.focus()
-    // setCoolCatFact(text)
   }
 
   const fetchCatFact = async () => {
     await baseApiRequest({
       url: 'https://catfact.ninja/fact',
     }).then((data) => {
-      // setCoolCatFact(data.fact)
       resetInputText(data.fact)
-      // setFetchCounter(fetchCounter + 1)
     })
   }
 
-  const onSubmitHandler = async () => {
+  const onSubmitHandler = async ({ name }: { name: string }) => {
     await queryClient.cancelQueries({ queryKey: ['person_info'] })
-    refetch()
+    setFormName(name)
+  }
+
+  const getContent = () => {
+    if (error) {
+      return <Headline level='1'>{error.message}</Headline>
+    }
+
+    if (isLoading) {
+      return <Spinner size='medium' />
+    }
+
+    if (data?.age !== undefined) {
+      return (
+        <Headline>
+          Возраст {data.name} = {data?.age ? data.age : 'пирог это вранье'}
+        </Headline>
+      )
+    }
   }
 
   return (
@@ -84,14 +94,7 @@ export const Home: FC<HomeProps> = ({ id }) => {
             <Button stretched size='l' onClick={fetchCatFact}>
               Получить знания про крутых котов!
             </Button>
-            <input
-              ref={inputElement}
-              className={styles['base_input']}
-              // onChange={(e) => {
-              //   console.log('Text chnage', e.currentTarget.value)
-              //   setCoolCatFact(text)
-              // }}
-            />
+            <input ref={inputElement} className={styles['base_input']} />
           </div>
         </Group>
         <Group>
@@ -108,23 +111,16 @@ export const Home: FC<HomeProps> = ({ id }) => {
                 английском.
               </Subhead>
               <input
-                {...register('name', { pattern: /^[A-Za-z]+$/i })}
+                {...register('name', { pattern: INPUT_PATTERN })}
                 placeholder='Имя'
                 type='text'
                 required
                 className={styles['base_input']}
               />
               <Input type='submit' />
-              <span>{errors.name?.message}</span>
+              {errors.name && <span>{errors.name?.message}</span>}
             </form>
-
-            {error && <Headline level='1'>{error.message}</Headline>}
-
-            {isLoading && !error && <Spinner size='medium' />}
-
-            {!error && !isLoading && data?.age && (
-              <Headline>Возраст = {data?.age}</Headline>
-            )}
+            {getContent()}
           </div>
         </Group>
       </Div>

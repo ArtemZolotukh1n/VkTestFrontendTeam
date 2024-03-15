@@ -6,10 +6,10 @@ import axios from 'axios'
 export const useGetInfoByName = (name: GetPersonInfoReq['name']) => {
   const options: UseQueryOptions<GetPersonInfoRes> = {
     queryKey: ['person_info', name],
-    enabled: false,
+    enabled: !!name,
     queryFn: ({ signal }) => {
-      const CancelToken = axios.CancelToken
-      const source = CancelToken.source()
+      const cancelToken = axios.CancelToken
+      const source = cancelToken.source()
 
       signal.addEventListener('abort', () => {
         source.cancel('Query was cancelled by TanStack Query')
