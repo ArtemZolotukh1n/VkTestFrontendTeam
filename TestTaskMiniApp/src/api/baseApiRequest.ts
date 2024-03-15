@@ -2,7 +2,7 @@ import axios, { CancelToken } from 'axios'
 import { ApiEndpoints, ApiMethods } from '../types'
 
 interface BaseApiRequestOptions<T extends ApiEndpoints> {
-  url: `${T}`
+  url: T
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
   data?: ApiMethods[T]['request']
   urlParams?: ApiMethods[T]['querystring']
@@ -29,14 +29,15 @@ export async function baseApiRequest<T extends ApiEndpoints>({
     ? new URLSearchParams(paramsWithoutUndefinedValues).toString()
     : undefined
 
+  let apiUrl = `${url}`
   if (paramsToConcat) {
-    url += `?${paramsToConcat}`
+    apiUrl += `?${paramsToConcat}`
   }
 
   try {
     const response = await axios({
       method,
-      url: url,
+      url: apiUrl,
       data,
       cancelToken,
     })
