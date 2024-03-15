@@ -1,23 +1,44 @@
-import axios from 'axios'
-import { API_URL } from '../config/constats'
+import axios, { CancelToken } from 'axios'
+import { ApiEndpoints, ApiMethods } from '../types'
 
-interface BaseApiRequestOptions {
-  url: string
+interface BaseApiRequestOptions<T extends ApiEndpoints> {
+  url: `${T}`
   method?: 'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'
-  data?: object
+  data?: ApiMethods[T]['request']
+  urlParams?: ApiMethods[T]['querystring']
+  cancelToken?: CancelToken
 }
 
-export async function baseApiRequest<T>({
+export async function baseApiRequest<T extends ApiEndpoints>({
   url,
   method = 'GET',
   data,
-}: BaseApiRequestOptions): Promise<T> {
-  const apiUrl = `${API_URL}${url}`
+  urlParams,
+  cancelToken,
+}: BaseApiRequestOptions<T>): Promise<ApiMethods[T]['response']> {
+  const paramsWithoutUndefinedValues = urlParams
+    ? Object.entries(urlParams).reduce((acc, [key, value]) => {
+        if (value) {
+          acc[key] = value as string
+        }
+        return acc
+      }, {} as Record<string, string>)
+    : {}
+
+  const paramsToConcat = urlParams
+    ? new URLSearchParams(paramsWithoutUndefinedValues).toString()
+    : undefined
+
+  if (paramsToConcat) {
+    url += `?${paramsToConcat}`
+  }
+
   try {
     const response = await axios({
       method,
-      url: apiUrl,
+      url: url,
       data,
+      cancelToken,
     })
 
     return response.data

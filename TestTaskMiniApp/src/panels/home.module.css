@@ -1,6 +1,45 @@
+.main_container {
+  display: flex;
+  height: 100%;
+  flex-direction: column;
+  gap: 24px;
+}
+
 .cat_fact_container {
   display: flex;
   width: 100%;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
+}
+
+.form_container {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.base_input {
+  -moz-appearance: none;
+  appearance: none;
+  background: transparent;
+  border-radius: 2px;
+  border: inset;
+  border-radius: 20px;
+  box-shadow: none;
+  box-sizing: border-box;
+  color: var(--vkui--color_text_primary);
+  height: var(--vkui--size_field_height--regular);
+  margin: 0;
+  padding: 0 12px;
+  position: relative;
+  width: 100%;
+  z-index: var(--vkui_internal--z_index_form_field_element);
 }
